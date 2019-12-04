@@ -10,7 +10,7 @@ To start creating **AdHoc** protocol description projects, you need to:
 -   download [AdHoс protocol annotations](https://github.com/cheblin/AdHoc-protocol/tree/master/org/unirail/AdHoc).
     All AdHoc protocol description projects will need a reference to these
     annotations, precisely to the folder where the `org` - the annotations root
-    folder is located. Since annotations are referenced as sources, in IDEA, you
+    folder is located. Since annotations are referenced as sources, in **IDEA**, you
     have to add them to the project in this way [Add Content
     Root](https://www.jetbrains.com/help/idea/content-roots.html).
 
