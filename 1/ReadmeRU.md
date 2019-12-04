@@ -129,7 +129,7 @@
 Перезапускаем **AdHocAgent**, и, через короткое время, получаем [сгенерированые сервером
 исходники](https://github.com/cheblin/AdHocLessons/tree/master/1/GeneratedCode) в **рабочей/текущей папке** отработавшего **AdHocAgent** процесса.
 
-Исходник спецификации также был изменён **сервером**. И теперь она выглядит так:
+**[Исходник спецификации](https://github.com/cheblin/AdHocLessons/blob/master/1/MyDemoProject.java)** также был изменён **сервером**. И теперь она выглядит так:
 
 ![image](https://user-images.githubusercontent.com/29354319/70113601-b112ed80-1694-11ea-8182-488356d10082.png)
 
