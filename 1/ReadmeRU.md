@@ -1,3 +1,16 @@
+Перед тем как начать создавать проекты описания **AdHoc** протокола, необходимо:
+
+- установить **[JDK 8](https://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html)** и убедитесь, что
+ `javac` (компилятор java) находится в PATH и доступен из консоли.
+- установить любую **JAVA** IDE (**[Intellij IDEA](https://www.jetbrains.com/idea/download/)** - отличный выбор)
+- загрузить [аннотации AdHoс протокола](https://github.com/cheblin/AdHoc-protocol/tree/master/org/unirail/AdHoc).
+    Всем проектам описания AdHoc протокола потребуется ссылка на эти аннотации, точнее на папку, в которой находится `org` - 
+корневая папка аннотаций. Поскольку аннотации даны в исходниках, в **ИДЕЯ** их добавляют в проект 
+[как дополнительные исходники](https://www.jetbrains.com/help/idea/content-roots.html).
+- Чтобы отправить файл с описанием AdHoc протокола на сервер, для генерации там исходного кода / тестирования и получения результата, 
+потребуется утилита **[AdHocAgent](https://github.com/cheblin/AdHocAgent)**.  
+Скачайте [скомпилированный jar](https://github.com/cheblin/AdHocAgent/tree/master/bin) либо скомпилируйте самостоятельно из предоставленных исходников.
+
 Открыв среду разработки необходимо придумать название и [создать новый **JAVA**
 проект](https://www.jetbrains.com/help/idea/creating-and-running-your-first-java-application.html). Определившись c пространством имен, создадим в
 папке исходников проекта соответствующую иерархию. Затем, в этой иерархии, в кодировке
