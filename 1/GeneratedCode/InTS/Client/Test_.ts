@@ -5,8 +5,8 @@ import _Lib = _org.unirail.AdHoc;
 import _Pack = _Lib.Pack;
 import _Cursor = _Pack.Cursor;
 
-import { org as _bbox } from './Client';
-import _Config = _bbox.unirail.AdHoc.Config;
+import { org as _ad_hoc } from './Client';
+import _Config = _ad_hoc.unirail.AdHoc.Config;
 
 import { org as _gen } from './Client';
 import _Host_root = _gen.company.some_namespace;
@@ -153,7 +153,7 @@ export namespace org.unirail {
             console.info('-------------------- FirstPack -------------------------');
 
             if (ClientServerLink_instance.sendFirstPack()) _Lib.Channel.bytes_transfer(ClientServerLink_instance.transmitter, TestChannel.receiverAdv);
-            else throw new Error('error BBOX_FAILURE_SENDING_QUEUE_OVERFLOW');
+            else throw new Error('error AD_HOC_FAILURE_SENDING_QUEUE_OVERFLOW');
         }
     }
 }

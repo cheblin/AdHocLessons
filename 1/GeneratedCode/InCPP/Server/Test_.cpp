@@ -29,7 +29,7 @@ namespace org
 
                 Pack* test_pack = nullptr;
                 Transmitter transmitter{};
-                static Pack* pull_sending_pack(Transmitter* transmitter)
+                static const Pack* pull_sending_pack(Transmitter* transmitter)
                 {
                     Pack * pack = nullptr;
                     std::swap(pack, reinterpret_cast<TEST_Channel*>(reinterpret_cast<uint8_t*>(transmitter) - offsetof(TEST_Channel, transmitter))->test_pack);
@@ -104,7 +104,7 @@ int main()
         if(ch_TEST_Channel.send_FirstPack())
             for(size_t len; (len = ch_TEST_Channel.packs_into_bytes_adv(buff, sizeof buff));)
                 ch_ClientServerLink.channel.bytes_into_packs(buff,  len);
-        else  assert("error BBOX_FAILURE_SENDING_QUEUE_OVERFLOW");
+        else  assert("error AD_HOC_FAILURE_SENDING_QUEUE_OVERFLOW");
     }
 }
 

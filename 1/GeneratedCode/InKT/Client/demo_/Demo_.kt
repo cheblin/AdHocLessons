@@ -23,7 +23,7 @@ fun main() {
     val ClientServerLink_instance = ClientServerLink_demo()
 
     if (! ClientServerLink_instance.sendFirstPack())
-        throw RuntimeException("error BBOX_FAILURE_SENDING_QUEUE_OVERFLOW")
+        throw RuntimeException("error AD_HOC_FAILURE_SENDING_QUEUE_OVERFLOW")
 
     bytes_out = ClientServerLink_instance.transmitter.read(buff) // sending out packs
 }

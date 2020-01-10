@@ -37,7 +37,7 @@ pub mod org {
 					/**
 						*Function that fetch next pack from sending queue to send it
 						**/
-					unsafe extern "C" fn dequeue(dst: *mut sys::Transmitter) -> *mut sys::Pack;
+					unsafe extern "C" fn dequeue(dst: *mut sys::Transmitter) -> *const sys::Pack;
 					/**
 					 *Add pack to the sending queue
 					 **/

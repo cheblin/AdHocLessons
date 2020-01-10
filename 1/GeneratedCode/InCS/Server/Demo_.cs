@@ -4,6 +4,7 @@ using System;
 using org.company.some_namespace;
 using org.company.some_namespace.Server;
 using System.Collections.Generic;
+using System.Text;
 using org.unirail;
 using Cursor = org.unirail.AdHoc.Pack.Cursor;
 using Pack = org.unirail.AdHoc.Pack;

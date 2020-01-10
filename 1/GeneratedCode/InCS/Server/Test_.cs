@@ -9,6 +9,7 @@ using Cursor = org.unirail.AdHoc.Pack.Cursor;
 using Pack = org.unirail.AdHoc.Pack;
 using Lib = org.unirail.AdHoc;
 using System.IO;
+using System.Text;
 
 namespace org.unirail
 {
@@ -164,7 +165,7 @@ namespace org.unirail
             var ClientServerLink_instance = new ClientServerLink_test();
             Debug.Print("-------------------- FirstPack -------------------------");
             if(TestChannel_instance.sendFirstPack()) TestChannel_instance.Adv.CopyTo(ClientServerLink_instance);
-            else throw new SystemException("error BBOX_FAILURE_SENDING_QUEUE_OVERFLOW");
+            else throw new SystemException("error AD_HOC_FAILURE_SENDING_QUEUE_OVERFLOW");
         }
     }
 }

@@ -1,11 +1,29 @@
 
-// Copyright 2019 Chikirev Sirguy, Unirail Group
+// AdHoc protocol - data interchange format
+// Copyright 2019 Chikirev Sirguy, Unirail Group. All rights reserved.
 //
-// Licensed under the Apache License, Version 2.0,
-// <LICENSE-APACHE or http://apache.org/licenses/LICENSE-2.0> or
-// the MIT license <LICENSE-MIT or http://opensource.org/licenses/MIT>,
-// at your option. This file may not be
-// copied, modified, or distributed except according to those terms
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+//     * Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+//     * Redistributions in binary form must reproduce the above
+// copyright notice, this list of conditions and the following disclaimer
+// in the documentation and/or other materials provided with the
+// distribution.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "AdHoc.h"
 
 #define BR (0x55)
@@ -16,11 +34,11 @@ const uint8_t lO[] = {0x00, 0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff};
 static inline uint16_t crc16(uint8_t byte, uint16_t crc)
 {
     static const uint16_t tab[16] = {0, 4129, 8258, 12387, 16516, 20645, 24774, 28903, 33032, 37161, 41290, 45419, 49548, 53677, 57806, 61935};
-    crc = tab[(crc >> 12 ^ byte >> 4) & 0x0F] ^ crc << 4;
+    crc                           = tab[(crc >> 12 ^ byte >> 4) & 0x0F] ^ crc << 4;
     return tab[(crc >> 12 ^ byte & 0x0F) & 0x0F] ^ crc << 4;
 }
 
-static inline void set_0(uint8_t *dst, size_t bit, size_t bits)
+static inline void set_0(uint8_t* dst, size_t bit, size_t bits)
 {
     dst += bit >> 3;
     bit &= 7;
@@ -35,15 +53,15 @@ static inline void set_0(uint8_t *dst, size_t bit, size_t bits)
         if(bits & 7) dst[bits >> 3] &= lO[8 - (bits & 7)];
         if(!(bits >>= 3)) return;
         for(uint16_t i = bits % sizeof(UMAX); 0 < i--; *dst = 0, dst++);
-        for(UMAX     *umax                                  = (UMAX *) dst + (bits / sizeof(UMAX) - 1); (UMAX *) dst <= umax; umax--) *umax = 0;
+        for(UMAX* umax = (UMAX *)dst + (bits / sizeof(UMAX) - 1); (UMAX *)dst <= umax; umax--) *umax = 0;
     }
     else *dst &= Ol[bit] | lO[8 - (bit + bits)];
 }
-static inline void copy_bits(const uint8_t *src, size_t src_bit, size_t bits, uint8_t *dst, size_t dst_bit)
+static inline void copy_bits(const uint8_t* src, size_t src_bit, size_t bits, uint8_t* dst, size_t dst_bit)
 {
     if(bits < 1 || src == dst && src_bit == dst_bit) return;
-    int32_t       count = (bits >> 3) / sizeof(UMAX);
-    const uint8_t b     = sizeof(UMAX) * 8;
+    int32_t count = (bits >> 3) / sizeof(UMAX);
+    const uint8_t b = sizeof(UMAX) * 8;
     bits %= b;
     if(src == dst && src_bit < dst_bit)
     {
@@ -59,7 +77,7 @@ static inline void copy_bits(const uint8_t *src, size_t src_bit, size_t bits, ui
     }
 }
 
-static inline int32_t first_1(const uint8_t *bytes, size_t bit, size_t bits, bool existence)
+static inline int32_t first_1(const uint8_t* bytes, size_t bit, size_t bits, bool existence)
 {
     int32_t _1BYTE = bit >> 3;
     int32_t v      = bytes[_1BYTE] & 0xFF;
@@ -84,8 +102,8 @@ static inline int32_t first_1(const uint8_t *bytes, size_t bit, size_t bits, boo
     }
     {
         const int32_t last = _1BYTE + (bits >> 3);
-        for(int32_t  BYTE = _1BYTE; BYTE < last; BYTE++)
-            if(0 < (v     = bytes[BYTE] & 0xFF))
+        for(int32_t BYTE = _1BYTE; BYTE < last; BYTE++)
+            if(0 < (v    = bytes[BYTE] & 0xFF))
             {
                 add += BYTE - _1BYTE << 3;
                 goto s;
@@ -98,35 +116,32 @@ s:
     for(int32_t i = 0;; i++) if((v >> i & 1) == 1) return add + i;
 }
 
-static inline int32_t first_field_bit(CursorBase *cur)
-{
-    return first_1(cur->bytes, cur->meta->field_0_bit, cur->BIT_E - cur->meta->field_0_bit, false);
-}
+static inline int32_t first_field_bit(CursorBase* cur) { return first_1(cur->bytes, cur->meta->field_0_bit, cur->BIT_E - cur->meta->field_0_bit, false); }
 
-static inline int32_t next_field_bit(CursorBase *cur)
+static inline int32_t next_field_bit(CursorBase* cur)
 {
     return cur->field_bit - cur->meta->field_0_bit < cur->meta->fields_count - 1 ? first_1(cur->bytes, cur->field_bit + 1, cur->BIT_E - (cur->field_bit + 1), false) : -1;
 }
 
-Pack *new_pack_int(const Meta *meta, bool zeroed, size_t extra_size)
+Pack* new_pack_int(const Meta* meta, bool zeroed, size_t extra_size)
 {
-    Meta **ret = (Meta **)(zeroed ? calloc(sizeof(Pack) + meta->packMinBytes + extra_size, 1) : malloc(sizeof(Pack) + meta->packMinBytes + extra_size));
-    return ret ? *ret = (Meta *) meta, (Pack *) ret : NULL;
+    Meta** ret = (Meta **)(zeroed ? calloc(sizeof(Pack) + meta->packMinBytes + extra_size, 1) : malloc(sizeof(Pack) + meta->packMinBytes + extra_size));
+    return ret ? *ret = (Meta *)meta, (Pack *)ret : NULL;
 }
 
-void free_pack(Pack *pack) { if(pack && (pack->meta->packMinBytes || pack->meta->fields_count)) free(pack); }
+void free_pack(Pack* pack) { if(pack && (pack->meta->packMinBytes || pack->meta->fields_count)) free(pack); }
 
-Pack *new_pack(Meta const *const meta) { return new_pack_int(meta, true, 0); }
+Pack* new_pack(Meta const* const meta) { return new_pack_int(meta, true, 0); }
 
-static inline bool has_opt_fields(Meta const *const meta) { return meta->fields_count; }
+static inline bool has_opt_fields(Meta const* const meta) { return meta->fields_count; }
 
-bool reset_cursor(Cursor *const cur)
+bool reset_cursor(Cursor* const cur)
 {
-    Meta const *const meta = cur->base.meta;
-    cur->base.field_bit   = -1;
-    cur->base.BYTE_E      = cur->base.BYTE_S = cur->BYTE = meta->packMinBytes + (meta->BITS_lenINbytes_bits == 0 ? 0 : get_bits(cur->base.bytes, meta->field_0_bit - meta->BITS_lenINbytes_bits, meta->BITS_lenINbytes_bits));
-    cur->base.BIT_E       = cur->base.BIT_S  = cur->BIT  = cur->BYTE << 3;
-    cur->base.subitem_len = 0;
+    Meta const* const meta = cur->base.meta;
+    cur->base.field_bit    = -1;
+    cur->base.BYTE_E       = cur->base.BYTE_S = cur->BYTE = meta->packMinBytes + (meta->BITS_lenINbytes_bits == 0 ? 0 : get_bits(cur->base.bytes, meta->field_0_bit - meta->BITS_lenINbytes_bits, meta->BITS_lenINbytes_bits));
+    cur->base.BIT_E        = cur->base.BIT_S  = cur->BIT  = cur->BYTE << 3;
+    cur->base.subitem_len  = 0;
     if(has_opt_fields(meta))
         if(first_field_bit(&cur->base) < 0)
         {
@@ -134,7 +149,7 @@ bool reset_cursor(Cursor *const cur)
             cur->base.LAST_BIT  = cur->base.BIT_E;
         }
         else cur->base.LAST_BYTE = cur->base.LAST_BIT = -1;
-    else cur->base.LAST_BIT  = (cur->base.LAST_BYTE = meta->packMinBytes) * 8;
+    else cur->base.LAST_BIT = (cur->base.LAST_BYTE = meta->packMinBytes) * 8;
     cur->base.LAST_field_bit = -1;
     cur->item_len            = 0;
     cur->field_item_0        = -1;
@@ -143,20 +158,17 @@ bool reset_cursor(Cursor *const cur)
     return true;
 }
 
-static void set_bounds(const Field *fld, CursorBase *cur)
+static void set_bounds(const Field* fld, CursorBase* cur)
 {
-    uint8_t *bytes = cur->bytes;
+    uint8_t* bytes   = cur->bytes;
     cur->subitem_len = fld->size;
-    int32_t bit   = cur->BIT_E;
-    int32_t count = 1;
+    int32_t bit      = cur->BIT_E;
+    int32_t count    = 1;
     switch(fld->type)
     {
         case 1:
         {
-            if(fld->var_dims_count)
-                for(size_t i = 0; i < fld->dims_count; i++)
-                    if(fld->dims[i] < 0)
-                        count *= get_bits(bytes, bit -= -fld->dims[i], -fld->dims[i]);
+            if(fld->var_dims_count) for(size_t i = 0; i < fld->dims_count; i++) if(fld->dims[i] < 0) count *= get_bits(bytes, bit -= -fld->dims[i], -fld->dims[i]);
             cur->BIT_E -= fld->field_info_bits;
             cur->BYTE_E += fld->const_dims_total * count * -fld->length * fld->size;
             break;
@@ -164,21 +176,15 @@ static void set_bounds(const Field *fld, CursorBase *cur)
         case 3:
         {
             cur->BIT_E -= fld->field_info_bits;
-            int32_t          arrays_length = (int32_t) get_bits(bytes, cur->BIT_E, -fld->length);
-            if(fld->var_dims_count)
-                for(int32_t i             = 0; i < fld->dims_count; i++)
-                    if(fld->dims[i] < 0)
-                        arrays_length *= get_bits(bytes, bit -= -fld->dims[i], -fld->dims[i]);
+            int32_t arrays_length = (int32_t)get_bits(bytes, cur->BIT_E, -fld->length);
+            if(fld->var_dims_count) for(int32_t i = 0; i < fld->dims_count; i++) if(fld->dims[i] < 0) arrays_length *= get_bits(bytes, bit -= -fld->dims[i], -fld->dims[i]);
             cur->BYTE_E += fld->const_dims_total * arrays_length * fld->size;
             break;
         }
         case 5:
         {
-            count              = fld->const_dims_total;
-            if(fld->var_dims_count)
-                for(int32_t i = 0; i < fld->dims_count; i++)
-                    if(fld->dims[i] < 0)
-                        count *= get_bits(bytes, bit -= -fld->dims[i], -fld->dims[i]);
+            count = fld->const_dims_total;
+            if(fld->var_dims_count) for(int32_t i = 0; i < fld->dims_count; i++) if(fld->dims[i] < 0) count *= get_bits(bytes, bit -= -fld->dims[i], -fld->dims[i]);
             cur->BIT_E -= fld->field_info_bits;
             int32_t all_arrays_sum = 0;
             while(0 < count--) all_arrays_sum += get_bits(bytes, cur->BIT_E -= -fld->length, -fld->length);
@@ -187,40 +193,30 @@ static void set_bounds(const Field *fld, CursorBase *cur)
         }
         case 7:
         {
-            cur->subitem_len   = 0;
-            if(fld->var_dims_count)
-                for(int32_t i = 0; i < fld->dims_count; i++)
-                    if(fld->dims[i] < 0)
-                        count *= get_bits(bytes, bit -= -fld->dims[i], -fld->dims[i]);
+            cur->subitem_len = 0;
+            if(fld->var_dims_count) for(int32_t i = 0; i < fld->dims_count; i++) if(fld->dims[i] < 0) count *= get_bits(bytes, bit -= -fld->dims[i], -fld->dims[i]);
             cur->BIT_E -= fld->field_info_bits + count * fld->const_dims_total * -fld->length * fld->size;
             break;
         }
         case 9:
         {
             cur->BIT_E -= fld->field_info_bits;
-            int32_t          arrays_length = (int32_t) get_bits(bytes, cur->BIT_E, -fld->length);
-            if(fld->var_dims_count)
-                for(int32_t i             = 0; i < fld->dims_count; i++)
-                    if(fld->dims[i] < 0)
-                        arrays_length *= get_bits(bytes, bit -= -fld->dims[i], -fld->dims[i]);
+            int32_t arrays_length = (int32_t)get_bits(bytes, cur->BIT_E, -fld->length);
+            if(fld->var_dims_count) for(int32_t i = 0; i < fld->dims_count; i++) if(fld->dims[i] < 0) arrays_length *= get_bits(bytes, bit -= -fld->dims[i], -fld->dims[i]);
             cur->BIT_E -= fld->const_dims_total * arrays_length * fld->size;
             break;
         }
         case 11:
         {
-            count              = fld->const_dims_total;
-            if(fld->var_dims_count)
-                for(int32_t i = 0; i < fld->dims_count; i++)
-                    if(fld->dims[i] < 0)
-                        count *= get_bits(bytes, bit -= -fld->dims[i], -fld->dims[i]);
+            count = fld->const_dims_total;
+            if(fld->var_dims_count) for(int32_t i = 0; i < fld->dims_count; i++) if(fld->dims[i] < 0) count *= get_bits(bytes, bit -= -fld->dims[i], -fld->dims[i]);
             cur->BIT_E -= fld->field_info_bits;
-            while(0 < count--)
-                cur->BIT_E -= (int32_t) get_bits(bytes, cur->BIT_E -= -fld->length, -fld->length) * fld->size;
+            while(0 < count--) cur->BIT_E -= (int32_t)get_bits(bytes, cur->BIT_E -= -fld->length, -fld->length) * fld->size;
             break;
         }
         default:
-            if(!(count = (int32_t) get_bits(bytes, cur->BIT_E -= fld->field_info_bits, fld->sparse_bits))) return;
-            bit         = cur->BIT_E;
+            if(!(count = (int32_t)get_bits(bytes, cur->BIT_E -= fld->field_info_bits, fld->sparse_bits))) return;
+            bit = cur->BIT_E;
             switch(fld->type)
             {
                 case 2:
@@ -233,7 +229,7 @@ static void set_bounds(const Field *fld, CursorBase *cur)
                 case 4:
                 {
                     cur->BIT_E -= count;
-                    int32_t arrays_length = (int32_t) get_bits(bytes, bit + 2 * fld->sparse_bits, -fld->length);
+                    int32_t arrays_length = (int32_t)get_bits(bytes, bit + 2 * fld->sparse_bits, -fld->length);
                     while(cur->BIT_E < bit--) if((bytes[bit >> 3] & 1 << (bit & 7)) == 0) count--;
                     cur->BYTE_E += count * arrays_length * fld->size;
                     break;
@@ -241,33 +237,26 @@ static void set_bounds(const Field *fld, CursorBase *cur)
                 case 6:
                 {
                     int32_t all_arrays_sum = 0;
-                    while(0 < count--)
-                        if((bytes[--bit >> 3] & 1 << (bit & 7)) != 0)
-                            all_arrays_sum += get_bits(bytes, bit -= -fld->length, -fld->length);
+                    while(0 < count--) if((bytes[--bit >> 3] & 1 << (bit & 7)) != 0) all_arrays_sum += get_bits(bytes, bit -= -fld->length, -fld->length);
                     cur->BYTE_E += all_arrays_sum * fld->size;
-                    cur->BIT_E             = bit;
+                    cur->BIT_E = bit;
                     break;
                 }
                 case 8:
                 {
-                    for(const int32_t bits = -fld->length * fld->size; 0 < count--;)
-                        if((bytes[--bit >> 3] & 1 << (bit & 7)) != 0)
-                            bit -= bits;
+                    for(const int32_t bits = -fld->length * fld->size; 0 < count--;) if((bytes[--bit >> 3] & 1 << (bit & 7)) != 0) bit -= bits;
                     cur->BIT_E = bit;
                     break;
                 }
                 case 10:
                 {
-                    for(const int32_t bits = (int32_t) get_bits(bytes, bit + 2 * fld->sparse_bits, -fld->length) * fld->size; 0 < count--;)
-                        if((bytes[--bit >> 3] & 1 << (bit & 7)) != 0) bit -= bits;
+                    for(const int32_t bits = (int32_t)get_bits(bytes, bit + 2 * fld->sparse_bits, -fld->length) * fld->size; 0 < count--;) if((bytes[--bit >> 3] & 1 << (bit & 7)) != 0) bit -= bits;
                     cur->BIT_E = bit;
                     break;
                 }
                 case 12:
                 {
-                    while(0 < count--)
-                        if((bytes[--bit >> 3] & 1 << (bit & 7)) != 0)
-                            bit -= (int32_t) get_bits(bytes, bit -= -fld->length, -fld->length) * fld->size;
+                    while(0 < count--) if((bytes[--bit >> 3] & 1 << (bit & 7)) != 0) bit -= (int32_t)get_bits(bytes, bit -= -fld->length, -fld->length) * fld->size;
                     cur->BIT_E = bit;
                     break;
                 }
@@ -277,41 +266,41 @@ static void set_bounds(const Field *fld, CursorBase *cur)
     }
 }
 
-static void init(Field const *fld, Cursor *curX)
+static void init(Field const* fld, Cursor* curX)
 {
-    CursorBase    *cur   = &curX->base;
-    const uint8_t *bytes = cur->bytes;
+    CursorBase*    cur   = &curX->base;
+    const uint8_t* bytes = cur->bytes;
     switch(fld->type)
     {
         case 1:
             curX->item_len = -fld->length;
-            curX->BIT      = cur->BIT_E;
+            curX->BIT = cur->BIT_E;
             break;
         case 3:
-            curX->item_len = (int32_t) get_bits(bytes, curX->BIT = cur->BIT_S - fld->field_info_bits, -fld->length);
+            curX->item_len = (int32_t)get_bits(bytes, curX->BIT = cur->BIT_S - fld->field_info_bits, -fld->length);
             break;
         case 5:
         case 11:
-            curX->item_len     = 0;
+            curX->item_len = 0;
             curX->BIT          = cur->BIT_S - fld->field_info_bits;
             curX->field_item_0 = 0;
             curX->field_item   = 0x7fffffff;
             curX->field_items  = curX->field_items_total;
             break;
         case 7:
-            curX->item_len     = -fld->length;
+            curX->item_len = -fld->length;
             curX->field_item_0 = 0;
             curX->BIT          = cur->BIT_E;
-            curX->field_item   = (curX->field_items              = curX->field_items_total) == 0 ? 0x7fffffff : 0;
+            curX->field_item   = (curX->field_items = curX->field_items_total) == 0 ? 0x7fffffff : 0;
             break;
         case 9:
-            curX->item_len     = (int32_t) get_bits(bytes, curX->BIT = cur->BIT_S - fld->field_info_bits, -fld->length);
+            curX->item_len = (int32_t)get_bits(bytes, curX->BIT = cur->BIT_S - fld->field_info_bits, -fld->length);
             curX->field_item_0 = 0;
             curX->BIT          = cur->BIT_E;
-            curX->field_item   = (curX->field_items                  = curX->field_items_total) == 0 ? 0x7fffffff : 0;
+            curX->field_item   = (curX->field_items = curX->field_items_total) == 0 ? 0x7fffffff : 0;
             break;
         default:
-            curX->BIT     = cur->BIT_S - fld->field_info_bits;
+            curX->BIT = cur->BIT_S - fld->field_info_bits;
             switch(fld->type)
             {
                 case 2:
@@ -322,23 +311,23 @@ static void init(Field const *fld, Cursor *curX)
                     break;
                 case 4:
                 case 10:
-                    curX->item_len = (int32_t) get_bits(bytes, curX->BIT + 2 * fld->sparse_bits, -fld->length);
+                    curX->item_len = (int32_t)get_bits(bytes, curX->BIT + 2 * fld->sparse_bits, -fld->length);
                     break;
             }
             curX->field_item   = 0x7fffffff;
-            curX->field_items  = (int32_t) get_bits(bytes, curX->BIT, fld->sparse_bits);
-            curX->field_item_0 = (int32_t) get_bits(bytes, curX->BIT + fld->sparse_bits, fld->sparse_bits);
+            curX->field_items  = (int32_t)get_bits(bytes, curX->BIT, fld->sparse_bits);
+            curX->field_item_0 = (int32_t)get_bits(bytes, curX->BIT + fld->sparse_bits, fld->sparse_bits);
     }
-    curX->BYTE           = cur->BYTE_S;
+    curX->BYTE = cur->BYTE_S;
 }
 
-static inline void _reset_cursor(CursorBase *cur)
+static inline void _reset_cursor(CursorBase* cur)
 {
-    Meta const *const meta = cur->meta;
-    cur->field_bit   = -1;
-    cur->BYTE_E      = cur->BYTE_S = meta->packMinBytes + (meta->BITS_lenINbytes_bits == 0 ? 0 : (uint32_t) get_bits(cur->bytes, meta->field_0_bit - meta->BITS_lenINbytes_bits, meta->BITS_lenINbytes_bits));
-    cur->BIT_E       = cur->BIT_S  = cur->BYTE_E << 3;
-    cur->subitem_len = 0;
+    Meta const* const meta = cur->meta;
+    cur->field_bit         = -1;
+    cur->BYTE_E            = cur->BYTE_S = meta->packMinBytes + (meta->BITS_lenINbytes_bits == 0 ? 0 : (uint32_t)get_bits(cur->bytes, meta->field_0_bit - meta->BITS_lenINbytes_bits, meta->BITS_lenINbytes_bits));
+    cur->BIT_E             = cur->BIT_S  = cur->BYTE_E << 3;
+    cur->subitem_len       = 0;
     if(has_opt_fields(meta))
         if(first_field_bit(cur) < 0)
         {
@@ -346,14 +335,14 @@ static inline void _reset_cursor(CursorBase *cur)
             cur->LAST_BIT  = cur->BIT_E;
         }
         else cur->LAST_BYTE = cur->LAST_BIT = -1;
-    else cur->LAST_BIT  = (cur->LAST_BYTE = meta->packMinBytes) * 8;
+    else cur->LAST_BIT = (cur->LAST_BYTE = meta->packMinBytes) * 8;
     cur->LAST_field_bit = -1;
 }
 
-size_t pack_size(CursorBase *const cur)
+size_t pack_size(CursorBase* const cur)
 {
-    const Meta *const meta = cur->meta;
-    int32_t delta = cur->field_bit == -1 ? first_field_bit(cur) : next_field_bit(cur);
+    const Meta* const meta  = cur->meta;
+    int32_t           delta = cur->field_bit == -1 ? first_field_bit(cur) : next_field_bit(cur);
     if(delta == -1)
     {
         cur->LAST_BYTE      = cur->BYTE_E;
@@ -362,15 +351,15 @@ size_t pack_size(CursorBase *const cur)
         return cur->LAST_BYTE;
     }
     CursorBase tmp;
-    tmp = *cur;
+    tmp                            = *cur;
     const int32_t meta_field_0_bit = meta->field_0_bit;
     if(cur->field_bit < 0) tmp.field_bit = meta_field_0_bit - 1;
     do
     {
         tmp.field_bit += delta + 1;
-        tmp.BIT_S  = tmp.BIT_E;
-        tmp.BYTE_S = tmp.BYTE_E;
-        Field const *fld = meta->fields[tmp.field_bit - meta_field_0_bit];
+        tmp.BIT_S        = tmp.BIT_E;
+        tmp.BYTE_S       = tmp.BYTE_E;
+        Field const* fld = meta->fields[tmp.field_bit - meta_field_0_bit];
         if(0 < fld->length)
             if(0 < fld->size) tmp.BYTE_E += fld->const_dims_total * fld->length * fld->size;
             else tmp.BIT_E += fld->const_dims_total * fld->length * fld->size;
@@ -384,23 +373,23 @@ size_t pack_size(CursorBase *const cur)
 }
 void resize_bytes(Cursor cur[], const int32_t diff)
 {
-    Cursor *_init = cur;
+    Cursor* _init = cur;
     while(!cur->base.pack) cur--;
-    const size_t  BYTE   = _init->base.bytes - cur->base.bytes + _init->BYTE;
-    Pack          *pack  = cur->base.pack;
-    uint8_t const *bytes = pack->bytes;
+    const size_t   BYTE  = _init->base.bytes - cur->base.bytes + _init->BYTE;
+    Pack*          pack  = cur->base.pack;
+    uint8_t const* bytes = pack->bytes;
     if(cur->base.LAST_BYTE < 0) pack_size(&cur->base);
     const size_t new_size = sizeof(Pack) + cur->base.LAST_BYTE + diff;
     if(0 < diff)
     {
-        pack = (Pack *) realloc(pack, new_size);
+        pack = (Pack *)realloc(pack, new_size);
         memcpy(pack->bytes + BYTE + diff, pack->bytes + BYTE, cur->base.LAST_BYTE - BYTE);
         memset(pack->bytes + BYTE, 0, diff);
     }
     else
     {
         memcpy(pack->bytes + BYTE, pack->bytes + BYTE - diff, cur->base.LAST_BYTE - (BYTE - diff));
-        pack = (Pack *) realloc(pack, new_size);
+        pack = (Pack *)realloc(pack, new_size);
     }
     for(const int32_t shift = (cur->base.pack = pack)->bytes - bytes;;)
     {
@@ -410,7 +399,7 @@ void resize_bytes(Cursor cur[], const int32_t diff)
         if(cur == _init) return;
         if(-1 < cur->base.field_bit)
         {
-            Field const   *fld   = getField(&cur->base);
+            Field const*  fld    = getField(&cur->base);
             const int32_t length = fld->length;
             if(length < 0) set_bits(cur->item_len += diff, -length, cur->base.bytes, cur->BIT);
         }
@@ -418,22 +407,19 @@ void resize_bytes(Cursor cur[], const int32_t diff)
     }
 }
 
-static inline uint16_t bits2bytes(int32_t bits)
+static inline uint16_t bits2bytes(int32_t bits) { return bits < 1 ? 0 : 1 + ((bits - 1) >> 3); }
+static void            insert(Cursor curX[], const int32_t fbit, const int32_t bits, const int32_t bytes)
 {
-    return bits < 1 ? 0 : 1 + ((bits - 1) >> 3);
-}
-static void insert(Cursor curX[], const int32_t fbit, const int32_t bits, const int32_t bytes)
-{
-    CursorBase *cur = &curX->base;
+    CursorBase* cur = &curX->base;
     if(cur->field_bit != fbit)
     {
         curX->BIT      = cur->BIT_S  = cur->BIT_E;
         curX->BYTE     = cur->BYTE_S = cur->BYTE_E;
         curX->item_len = 0;
     }
-    Meta const    *meta               = cur->meta;
-    const size_t  old_pack_data_bytes = cur->LAST_BYTE < 0 ? pack_size(cur), cur->LAST_BYTE : cur->LAST_BYTE;
-    int32_t       add_to_bits_bytes;
+    Meta const*  meta                = cur->meta;
+    const size_t old_pack_data_bytes = cur->LAST_BYTE < 0 ? pack_size(cur), cur->LAST_BYTE : cur->LAST_BYTE;
+    int32_t      add_to_bits_bytes;
     if(curX->BIT == cur->LAST_BIT && curX->BYTE == old_pack_data_bytes)
     {
         add_to_bits_bytes = meta->BITS_lenINbytes_bits == 0 ? 0 : bits2bytes(fbit + bits - cur->LAST_BIT + 1);
@@ -474,10 +460,10 @@ static void insert(Cursor curX[], const int32_t fbit, const int32_t bits, const 
     }
     if(0 < meta->BITS_lenINbytes_bits && 0 < add_to_bits_bytes)
     {
-        const int32_t old_value = (int32_t) get_bits(cur->bytes, meta->field_0_bit - meta->BITS_lenINbytes_bits, meta->BITS_lenINbytes_bits);
+        const int32_t old_value = (int32_t)get_bits(cur->bytes, meta->field_0_bit - meta->BITS_lenINbytes_bits, meta->BITS_lenINbytes_bits);
         set_bits(old_value + add_to_bits_bytes, meta->BITS_lenINbytes_bits, cur->bytes, meta->field_0_bit - meta->BITS_lenINbytes_bits);
     }
-    const int32_t zazor_delta         = (add_to_bits_bytes << 3) - bits;
+    const int32_t zazor_delta = (add_to_bits_bytes << 3) - bits;
     cur->LAST_BIT += zazor_delta;
     curX->BIT += add_to_bits_bytes << 3;
     curX->BYTE += add_to_bits_bytes;
@@ -498,10 +484,9 @@ static void insert(Cursor curX[], const int32_t fbit, const int32_t bits, const 
 }
 
 
+static inline CursorBase* _get_cursor(Flow* const flow) { return &flow->cursors[flow->level]; }
 
-static inline CursorBase *_get_cursor(Flow *const flow) { return &flow->cursors[flow->level]; }
-
-static bool next(Flow *const flow, CursorBase **const cur, uint8_t **bytes)
+static bool next(Flow* const flow, CursorBase** const cur, uint8_t** bytes)
 {
 start:
     ;
@@ -511,25 +496,25 @@ start:
         switch((*cur)->subitem_len)
         {
             case 0:
-                (*cur)->BYTE_S = (*cur)->BYTE_E                      = 0;
+                (*cur)->BYTE_S = (*cur)->BYTE_E = 0;
                 if(0 < (*cur)->meta->_2)
                 {
                     (*cur)->BYTE_E += (*cur)->meta->_2 * ((*cur)->subitem_len = 2);
-                    flow->state = VARINT;
+                    flow->state                                               = VARINT;
                     return true;
                 }
             case 2:
                 if(0 < (*cur)->meta->_4)
                 {
                     (*cur)->BYTE_E += (*cur)->meta->_4 * ((*cur)->subitem_len = 4);
-                    flow->state = VARINT;
+                    flow->state                                               = VARINT;
                     return true;
                 }
             case 4:
                 if(0 < (*cur)->meta->_8)
                 {
                     (*cur)->BYTE_E += (*cur)->meta->_8 * ((*cur)->subitem_len = 8);
-                    flow->state = VARINT;
+                    flow->state                                               = VARINT;
                     return true;
                 }
             case 8:
@@ -539,11 +524,10 @@ start:
                     (*cur)->subitem_len = 1;
                     return true;
                 }
-                flow->mode                           = NIL;
+                flow->mode = NIL;
             default:
-                if(!has_opt_fields((*cur)->meta))
-                    goto end;
-                const int32_t fix                    = (*cur)->BYTE_S;
+                if(!has_opt_fields((*cur)->meta)) goto end;
+                const int32_t fix = (*cur)->BYTE_S;
                 _reset_cursor(*cur);
                 if(flow->mode == NIL && fix < (*cur)->BYTE_E)
                 {
@@ -553,8 +537,8 @@ start:
                     (*cur)->subitem_len = 1;
                     return true;
                 }
-                flow->mode                           = NIL;
-                (*cur)->BIT_E                        = (*cur)->BIT_S = ((*cur)->BYTE_S = (*cur)->BYTE_E) << 3;
+                flow->mode    = NIL;
+                (*cur)->BIT_E = (*cur)->BIT_S = ((*cur)->BYTE_S = (*cur)->BYTE_E) << 3;
                 if((delta = first_field_bit(*cur)) == -1) goto end;
                 (*cur)->field_bit = (*cur)->meta->field_0_bit - 1;
         }
@@ -563,13 +547,12 @@ start:
 next_field:
     do
     {
-        Field const *fld = (*cur)->meta->fields[((*cur)->field_bit += delta + 1) - (*cur)->meta->field_0_bit];
-        flow->state    = fld->varint ? VARINT : BYTES;
-        (*cur)->BIT_S  = (*cur)->BIT_E;
-        (*cur)->BYTE_S = (*cur)->BYTE_E;
+        Field const* fld = (*cur)->meta->fields[((*cur)->field_bit += delta + 1) - (*cur)->meta->field_0_bit];
+        flow->state      = fld->varint ? VARINT : BYTES;
+        (*cur)->BIT_S    = (*cur)->BIT_E;
+        (*cur)->BYTE_S   = (*cur)->BYTE_E;
         if(0 < fld->length)
-            if(0 < fld->size)
-                (*cur)->BYTE_E += fld->const_dims_total * fld->length * ((*cur)->subitem_len = fld->size);
+            if(0 < fld->size)(*cur)->BYTE_E += fld->const_dims_total * fld->length * ((*cur)->subitem_len = fld->size);
             else(*cur)->BIT_E += fld->const_dims_total * fld->length * fld->size;
         else set_bounds(fld, *cur);
         if(fld->datatype)
@@ -610,44 +593,44 @@ end:
     return false;
 }
 
-void receive_adv(const uint8_t *src, size_t src_bytes, Receiver *const dst)
+void receive_adv(const uint8_t* src, size_t src_bytes, Receiver* const dst)
 {
-    Flow       *flow = &dst->flow;
-    CursorBase *cur  = _get_cursor(flow);
-    dst->time = ~(uint32_t) 0;
+    Flow*       flow = &dst->flow;
+    CursorBase* cur  = _get_cursor(flow);
+    dst->time        = ~(uint32_t)0;
     if(dst->time == 0)
     {
         dst->time   = ~0;
         flow->state = STANDBY;
-        host_event(__LINE__, dst, NULL, flow->cursors[0].pack, BBOX_FAILURE_RECEIVE_TIMEOUT);
+        host_event(__LINE__, dst, NULL, flow->cursors[0].pack, AD_HOC_FAILURE_RECEIVE_TIMEOUT);
         flow->cursors[0].pack = NULL;
     }
-    uint8_t *bytes = cur->bytes;
+    uint8_t* bytes = cur->bytes;
     for(; src_bytes--; flow->mode != CRC ? flow->crc = crc16(*src, flow->crc) : 0, src++)
     {
         switch(flow->state)
         {
             case STANDBY:
-                flow->crc         = 0;
-                flow->Uvalue                = 0;
-                dst->bits                   = 0;
+                flow->crc = 0;
+                flow->Uvalue = 0;
+                dst->bits    = 0;
                 if(*src == BR) flow->state = PACK_ID;
                 continue;
             case PACK_ID:
                 if(*src == BR)
                 {
-                    host_event(__LINE__, dst, NULL, NULL, BBOX_FAILURE_RECEIVE_EXPECT_ID_AFTER_BR_BUT_GET_BR);
+                    host_event(__LINE__, dst, NULL, NULL, AD_HOC_FAILURE_RECEIVE_EXPECT_ID_AFTER_BR_BUT_GET_BR);
                     flow->state = STANDBY;
                     continue;
                 }
-                flow->Uvalue                = flow->Uvalue << 8 | *src;
-                if(++dst->bits < BBOX_ID_BYTES) continue;
+                flow->Uvalue = flow->Uvalue << 8 | *src;
+                if(++dst->bits < AD_HOC_ID_BYTES) continue;
                 flow->mode  = NIL;
                 flow->level = 0;
-                cur = &flow->cursors[0];
+                cur         = &flow->cursors[0];
                 if((cur->meta = dst->dispatch(dst, flow->Uvalue, NULL)) == NULL)
                 {
-                    host_event(__LINE__, dst, NULL, NULL, BBOX_FAILURE_RECEIVE_PACK_WITH_UNEXPECTED_ID);
+                    host_event(__LINE__, dst, NULL, NULL, AD_HOC_FAILURE_RECEIVE_PACK_WITH_UNEXPECTED_ID);
                     flow->state  = STANDBY;
                     flow->Uvalue = 0;
                     continue;
@@ -662,8 +645,8 @@ void receive_adv(const uint8_t *src, size_t src_bytes, Receiver *const dst)
                     flow->mode  = OPTS_INFO;
                     continue;
                 }
-                cur->pack      = new_pack_int(cur->meta, false, 0);
-                bytes = cur->bytes = cur->pack->bytes;
+                cur->pack = new_pack_int(cur->meta, false, 0);
+                bytes     = cur->bytes = cur->pack->bytes;
                 break;
             case BYTES:
                 if(*src != BR) goto NOT_BR;
@@ -672,7 +655,7 @@ void receive_adv(const uint8_t *src, size_t src_bytes, Receiver *const dst)
             case BYTES_BR:
                 if(*src != BR)
                 {
-                    host_event(__LINE__, dst, NULL, flow->cursors[0].pack, BBOX_FAILURE_RECEIVE_EXPECT_SECOND_BR_BUT_GET);
+                    host_event(__LINE__, dst, NULL, flow->cursors[0].pack, AD_HOC_FAILURE_RECEIVE_EXPECT_SECOND_BR_BUT_GET);
                     flow->cursors[0].pack = NULL;
                     flow->state           = STANDBY;
                     continue;
@@ -683,11 +666,11 @@ NOT_BR:
                     switch(cur->subitem_len)
                     {
                         case 2:
-                            flow->Uvalue = (*src & (UMAX) 0xFF) << 8;
+                            flow->Uvalue = (*src & (UMAX)0xFF) << 8;
                             cur->subitem_len = 1;
                             continue;
                         case 1:
-                            if((flow->Uvalue | *src) != flow->crc) host_event(__LINE__, dst, NULL, flow->cursors[0].pack, BBOX_FAILURE_RECEIVE_CRC_ERROR);
+                            if((flow->Uvalue | *src) != flow->crc) host_event(__LINE__, dst, NULL, flow->cursors[0].pack, AD_HOC_FAILURE_RECEIVE_CRC_ERROR);
                             dst->dispatch(dst, flow->cursors[0].pack->meta->id, flow->cursors[0].pack);
                             flow->cursors[0].pack = NULL;
                             flow->state           = STANDBY;
@@ -704,21 +687,21 @@ NOT_BR:
             case VARINT_BR:
                 if(*src != BR)
                 {
-                    host_event(__LINE__, dst, NULL, flow->cursors[0].pack, BBOX_FAILURE_RECEIVE_EXPECT_SECOND_BR_BUT_GET);
+                    host_event(__LINE__, dst, NULL, flow->cursors[0].pack, AD_HOC_FAILURE_RECEIVE_EXPECT_SECOND_BR_BUT_GET);
                     flow->cursors[0].pack = NULL;
                     flow->state           = STANDBY;
                     continue;
                 }
                 flow->state = VARINT;
 NOT_BR_:
-                flow->Uvalue |= (*src & (UMAX) 0x7F) << dst->bits;
+                flow->Uvalue |= (*src & (UMAX)0x7F) << dst->bits;
                 dst->bits += 7;
                 if((*src & 0x80) != 0) continue;
                 dst->bits = 0;
                 if(flow->mode == OPTS_INFO)
                 {
-                    cur->pack = new_pack_int(cur->meta, true, flow->Uvalue);
-                    bytes = cur->bytes = cur->pack->bytes;
+                    cur->pack    = new_pack_int(cur->meta, true, flow->Uvalue);
+                    bytes        = cur->bytes = cur->pack->bytes;
                     flow->Uvalue = 0;
                     flow->mode   = NIL;
                     break;
@@ -735,12 +718,12 @@ NOT_BR_:
     }
 }
 
-uint32_t transmit_adv(Transmitter *const src, uint8_t *dst, size_t dst_bytes)
+uint32_t transmit_adv(Transmitter* const src, uint8_t* dst, size_t dst_bytes)
 {
-    Flow          *flow  = &src->flow;
-    CursorBase    *cur   = _get_cursor(flow);
-    const uint8_t *fix   = dst;
-    uint8_t       *bytes = cur->bytes;
+    Flow*          flow  = &src->flow;
+    CursorBase*    cur   = _get_cursor(flow);
+    const uint8_t* fix   = dst;
+    uint8_t*       bytes = cur->bytes;
     for(; dst_bytes--; flow->mode != CRC ? flow->crc = crc16(*dst, flow->crc) : 0, dst++)
     {
         switch(flow->state)
@@ -748,14 +731,14 @@ uint32_t transmit_adv(Transmitter *const src, uint8_t *dst, size_t dst_bytes)
             case STANDBY:
                 flow->level = 0;
                 cur = &flow->cursors[0];
-                if((cur->pack = src->pull(src)) == NULL) return dst - fix;
-                bytes = cur->bytes          = cur->pack->bytes;
+                if((cur->pack = (Pack*)src->pull(src)) == NULL) return dst - fix;
+                bytes          = cur->bytes = cur->pack->bytes;
                 cur->meta      = cur->pack->meta;
                 flow->state    = PACK_ID;
                 flow->Uvalue   = cur->meta->id;
-                cur->field_bit = 8 * (BBOX_ID_BYTES - 1);
+                cur->field_bit = 8 * (AD_HOC_ID_BYTES - 1);
                 flow->crc      = 0;
-                *dst = BR;
+                *dst           = BR;
                 continue;
             case PACK_ID:
                 *dst = (uint8_t)(flow->Uvalue >> cur->field_bit);
@@ -770,7 +753,7 @@ uint32_t transmit_adv(Transmitter *const src, uint8_t *dst, size_t dst_bytes)
                     _reset_cursor(cur);
                     pack_size(cur);
                     flow->Uvalue = cur->LAST_BYTE + 1 - cur->meta->packMinBytes;
-                    cur->BIT_E   = cur->BIT_S = cur->BYTE_E = cur->BYTE_S = cur->subitem_len = 0;
+                    cur->BIT_E = cur->BIT_S = cur->BYTE_E = cur->BYTE_S = cur->subitem_len = 0;
                     continue;
                 }
                 break;
@@ -794,7 +777,7 @@ uint32_t transmit_adv(Transmitter *const src, uint8_t *dst, size_t dst_bytes)
                             *dst = BR;
                     }
                     flow->state = STANDBY;
-                    flow->mode  = NIL;
+                    flow->mode = NIL;
                     host_event(__LINE__, NULL, src, flow->cursors[0].pack, AFTER_SENDING);
                     flow->cursors[0].pack = NULL;
                     continue;
@@ -809,7 +792,7 @@ NOT_BR:
                 if(cur->BYTE_S < cur->BYTE_E) continue;
                 break;
             case VARINT:
-                if(flow->Uvalue & ~(UMAX) 0x7F)
+                if(flow->Uvalue & ~(UMAX)0x7F)
                 {
                     *dst = (uint8_t)(flow->Uvalue & 0x7F | 0x80);
                     flow->Uvalue >>= 7;
@@ -818,10 +801,10 @@ NOT_BR:
                 if(flow->Uvalue == BR)
                 {
                     flow->state = VARINT_BR;
-                    *dst = BR;
+                    *dst        = BR;
                     continue;
                 }
-                *dst = flow->Uvalue & (UMAX) 0xFF;
+                *dst = flow->Uvalue & (UMAX)0xFF;
                 goto NOT_BR_;
             case VARINT_BR:
                 flow->state = VARINT;
@@ -845,36 +828,36 @@ NOT_BR_:
     return dst - fix;
 }
 
-void receive(const uint8_t *src, size_t src_bytes, Receiver *const dst)
+void receive(const uint8_t* src, size_t src_bytes, Receiver* const dst)
 {
-    Flow       *flow = &dst->flow;
-    CursorBase *cur  = _get_cursor(flow);
-    dst->time = ~(uint32_t) 0;
+    Flow*       flow = &dst->flow;
+    CursorBase* cur  = _get_cursor(flow);
+    dst->time        = ~(uint32_t)0;
     if(dst->time == 0)
     {
         dst->time   = ~0;
         flow->state = STANDBY;
-        host_event(__LINE__, dst, NULL, flow->cursors[0].pack, BBOX_FAILURE_RECEIVE_TIMEOUT);
+        host_event(__LINE__, dst, NULL, flow->cursors[0].pack, AD_HOC_FAILURE_RECEIVE_TIMEOUT);
         flow->cursors[0].pack = NULL;
     }
-    uint8_t *bytes = cur->bytes;
+    uint8_t* bytes = cur->bytes;
     for(; src_bytes--; src++)
     {
         switch(flow->state)
         {
             case STANDBY:
                 flow->Uvalue = 0;
-                dst->bits              = 0;
-                flow->state            = PACK_ID;
+                dst->bits   = 0;
+                flow->state = PACK_ID;
             case PACK_ID:
                 flow->Uvalue = flow->Uvalue << 8 | *src;
-                if(++dst->bits < BBOX_ID_BYTES) continue;
+                if(++dst->bits < AD_HOC_ID_BYTES) continue;
                 flow->mode  = NIL;
                 flow->level = 0;
-                cur = &flow->cursors[0];
+                cur         = &flow->cursors[0];
                 if((cur->meta = dst->dispatch(dst, flow->Uvalue, NULL)) == NULL)
                 {
-                    host_event(__LINE__, dst, NULL, NULL, BBOX_FAILURE_RECEIVE_PACK_WITH_UNEXPECTED_ID);
+                    host_event(__LINE__, dst, NULL, NULL, AD_HOC_FAILURE_RECEIVE_PACK_WITH_UNEXPECTED_ID);
                     flow->state = STANDBY;
                     continue;
                 }
@@ -888,22 +871,22 @@ void receive(const uint8_t *src, size_t src_bytes, Receiver *const dst)
                     flow->mode  = OPTS_INFO;
                     continue;
                 }
-                cur->pack      = new_pack_int(cur->meta, false, 0);
-                bytes = cur->bytes = cur->pack->bytes;
+                cur->pack = new_pack_int(cur->meta, false, 0);
+                bytes     = cur->bytes = cur->pack->bytes;
                 break;
             case BYTES:
                 bytes[cur->BYTE_S++] = *src;
                 if(cur->BYTE_S < cur->BYTE_E) continue;
                 break;
             case VARINT:
-                flow->Uvalue |= (*src & (UMAX) 0x7F) << dst->bits;
+                flow->Uvalue |= (*src & (UMAX)0x7F) << dst->bits;
                 dst->bits += 7;
                 if((*src & 0x80) != 0) continue;
                 dst->bits = 0;
                 if(flow->mode == OPTS_INFO)
                 {
-                    cur->pack = new_pack_int(cur->meta, true, flow->Uvalue);
-                    bytes = cur->bytes = cur->pack->bytes;
+                    cur->pack    = new_pack_int(cur->meta, true, flow->Uvalue);
+                    bytes        = cur->bytes = cur->pack->bytes;
                     flow->Uvalue = 0;
                     flow->mode   = NIL;
                     break;
@@ -921,12 +904,12 @@ void receive(const uint8_t *src, size_t src_bytes, Receiver *const dst)
     }
 }
 
-uint32_t transmit(Transmitter *const src, uint8_t *dst, size_t dst_bytes)
+uint32_t transmit(Transmitter* const src, uint8_t* dst, size_t dst_bytes)
 {
-    Flow          *flow  = &src->flow;
-    CursorBase    *cur   = _get_cursor(flow);
-    uint8_t       *bytes = cur->bytes;
-    const uint8_t *fix   = dst;
+    Flow*          flow  = &src->flow;
+    CursorBase*    cur   = _get_cursor(flow);
+    uint8_t*       bytes = cur->bytes;
+    const uint8_t* fix   = dst;
     for(; dst_bytes--; dst++)
     {
         switch(flow->state)
@@ -934,12 +917,12 @@ uint32_t transmit(Transmitter *const src, uint8_t *dst, size_t dst_bytes)
             case STANDBY:
                 flow->level = 0;
                 cur = &flow->cursors[0];
-                if((cur->pack = src->pull(src)) == NULL) return dst - fix;
-                bytes = cur->bytes          = cur->pack->bytes;
+                if((cur->pack = (Pack*)src->pull(src)) == NULL) return dst - fix;
+                bytes          = cur->bytes = cur->pack->bytes;
                 cur->meta      = cur->pack->meta;
                 flow->state    = PACK_ID;
                 flow->Uvalue   = cur->meta->id;
-                cur->field_bit = 8 * (BBOX_ID_BYTES - 1);
+                cur->field_bit = 8 * (AD_HOC_ID_BYTES - 1);
             case PACK_ID:
                 *dst = (uint8_t)(flow->Uvalue >> cur->field_bit);
                 if(-1 < (cur->field_bit -= 8)) continue;
@@ -953,7 +936,7 @@ uint32_t transmit(Transmitter *const src, uint8_t *dst, size_t dst_bytes)
                     _reset_cursor(cur);
                     pack_size(cur);
                     flow->Uvalue = cur->LAST_BYTE + 1 - cur->meta->packMinBytes;
-                    cur->BIT_E   = cur->BIT_S = cur->BYTE_E = cur->BYTE_S = cur->subitem_len = 0;
+                    cur->BIT_E = cur->BIT_S = cur->BYTE_E = cur->BYTE_S = cur->subitem_len = 0;
                     continue;
                 }
                 break;
@@ -962,13 +945,13 @@ uint32_t transmit(Transmitter *const src, uint8_t *dst, size_t dst_bytes)
                 if(cur->BYTE_S < cur->BYTE_E) continue;
                 break;
             case VARINT:
-                if(flow->Uvalue & ~(UMAX) 0x7F)
+                if(flow->Uvalue & ~(UMAX)0x7F)
                 {
                     *dst = (uint8_t)(flow->Uvalue & 0x7F | 0x80);
                     flow->Uvalue >>= 7;
                     continue;
                 }
-                *dst = (uint8_t) flow->Uvalue;
+                *dst = (uint8_t)flow->Uvalue;
                 if((cur->BYTE_S += cur->subitem_len) < cur->BYTE_E)
                 {
                     flow->Uvalue = get_bytes(bytes, cur->BYTE_S, cur->subitem_len);
@@ -981,7 +964,7 @@ uint32_t transmit(Transmitter *const src, uint8_t *dst, size_t dst_bytes)
             continue;
         }
         flow->state = STANDBY;
-        flow->mode  = NIL;
+        flow->mode = NIL;
         host_event(__LINE__, NULL, src, flow->cursors[0].pack, AFTER_SENDING);
         flow->cursors[0].pack = NULL;
     }
@@ -1001,19 +984,19 @@ uint32_t transmit(Transmitter *const src, uint8_t *dst, size_t dst_bytes)
 
 
 
-bool set_field(Cursor *const cur, size_t fbit, int32_t all_items_vals, ...)
+bool set_field(Cursor* const cur, size_t fbit, int32_t all_items_vals, ...)
 
 {
-    CursorBase *base = &cur->base;
+    CursorBase* base = &cur->base;
     if(base->field_bit == fbit) return true;
     if(all_items_vals < 0 &&
             (cur->base.BIT_E <= fbit ||
              (cur->base.bytes[fbit >> 3] & 1 << (fbit & 7)) == 0))
         return false;
-    Meta const *const meta = base->meta;
-    Field const *fld;
-    uint8_t     *bytes     = base->bytes;
-    int32_t     delta;
+    Meta const* const meta = base->meta;
+    Field const*      fld;
+    uint8_t*          bytes = base->bytes;
+    int32_t           delta;
     if(base->field_bit == -1 || fbit < base->field_bit && reset_cursor(cur))
     {
         if((delta = first_field_bit(base)) == -1 || fbit < meta->field_0_bit + delta) goto insert_field;
@@ -1024,7 +1007,7 @@ bool set_field(Cursor *const cur, size_t fbit, int32_t all_items_vals, ...)
     {
         base->BIT_S  = base->BIT_E;
         base->BYTE_S = base->BYTE_E;
-        fld = meta->fields[(base->field_bit += 1 + delta) - meta->field_0_bit];
+        fld          = meta->fields[(base->field_bit += 1 + delta) - meta->field_0_bit];
         if(0 < fld->length)
             if(0 < fld->size) base->BYTE_E += fld->const_dims_total * fld->length * fld->size;
             else base->BIT_E += fld->const_dims_total * fld->length * fld->size;
@@ -1045,9 +1028,8 @@ bool set_field(Cursor *const cur, size_t fbit, int32_t all_items_vals, ...)
             {
                 cur->D[fld->dims_count] = 0;
                 for(int32_t i = 0, bit = base->BIT_S, dim; i < fld->dims_count; i++)
-                    if((dim = fld->dims[i]) < 1)
-                        cur->field_items_total *= cur->D[i] = get_bits(bytes, bit -= -dim, -dim);
-                    else cur->D[i] = dim;
+                    if((dim   = fld->dims[i]) < 1) cur->field_items_total *= cur->D[i] = get_bits(bytes, bit -= -dim, -dim);
+                    else cur->D[i]                                                      = dim;
             }
             init(fld, cur);
         }
@@ -1120,9 +1102,7 @@ insert_field:
     }
     cur->field_items_total = total;
     if(fld->var_dims_count)
-        for(int32_t i = 0, bit = base->BIT_S; i < fld->dims_count; i++)
-            if(fld->dims[i] < 0)
-                set_bits(cur->D[i], -fld->dims[i], base->bytes, bit -= -fld->dims[i]);
+        for(int32_t i = 0, bit = base->BIT_S; i < fld->dims_count; i++) if(fld->dims[i] < 0) set_bits(cur->D[i], -fld->dims[i], base->bytes, bit -= -fld->dims[i]);
     set_bounds(fld, &cur->base);
     init(fld, cur);
     return true;
@@ -1139,10 +1119,10 @@ insert_field:
 
 
 
-bool set_item(Cursor *const cur, size_t item, int32_t item_vals)
+bool set_item(Cursor* const cur, size_t item, int32_t item_vals)
 {
-    CursorBase const *base = &cur->base;
-    Field const      *fld  = base->meta->fields[base->field_bit - base->meta->field_0_bit];
+    CursorBase const* base = &cur->base;
+    Field const*      fld  = base->meta->fields[base->field_bit - base->meta->field_0_bit];
     if(cur->field_item == item)
     {
         if(fld->type == 5 &&
@@ -1159,7 +1139,7 @@ bool set_item(Cursor *const cur, size_t item, int32_t item_vals)
     const int32_t len        = fld->length;
     const int32_t len_bits   = -len;
     uint32_t      bit        = cur->BIT;
-    uint8_t       *bytes     = base->bytes;
+    uint8_t*      bytes      = base->bytes;
     int32_t       field_item = cur->field_item;
     switch(fld->type)
     {
@@ -1195,15 +1175,14 @@ bool set_item(Cursor *const cur, size_t item, int32_t item_vals)
                         cur->field_item++;
                         cur->BYTE += cur->item_len * fld->size;
                     }
-                    for(const int32_t len_bytes = cur->item_len * fld->size; cur->field_item < _item; cur->field_item++, cur->BIT--)
-                        if((base->bytes[cur->BIT >> 3] & 1 << (cur->BIT & 7)) != 0) cur->BYTE += len_bytes;
+                    for(const int32_t len_bytes = cur->item_len * fld->size; cur->field_item < _item; cur->field_item++, cur->BIT--) if((base->bytes[cur->BIT >> 3] & 1 << (cur->BIT & 7)) != 0) cur->BYTE += len_bytes;
                     insert(cur, base->field_bit, 0, cur->item_len * fld->size);
                 }
                 else
                 {
                     const int32_t ins_items = _item + 1 - (cur->field_item_0 + cur->field_items);
-                    cur->BIT  = base->BIT_E;
-                    cur->BYTE = base->BYTE_E;
+                    cur->BIT                = base->BIT_E;
+                    cur->BYTE               = base->BYTE_E;
                     insert(cur, base->field_bit, ins_items, cur->item_len * fld->size);
                     cur->BIT  = base->BIT_E;
                     cur->BYTE = base->BYTE_E - cur->item_len * fld->size;
@@ -1242,9 +1221,10 @@ bool set_item(Cursor *const cur, size_t item, int32_t item_vals)
                     cur->field_item = 0;
                     cur->BIT        = base->BIT_S - fld->field_info_bits;
                     cur->BYTE       = base->BYTE_S;
-                    cur->item_len   = (int32_t) get_bits(base->bytes, cur->BIT -= len_bits, len_bits);
+                    cur->item_len   = (int32_t)get_bits(base->bytes, cur->BIT -= len_bits, len_bits);
                 }
-                for(; cur->field_item < _item; cur->BYTE += cur->item_len * fld->size, cur->item_len = (int32_t) get_bits(base->bytes, cur->BIT -= len_bits, len_bits), cur->field_item++);
+                for(; cur->field_item < _item; cur->BYTE += cur->item_len * fld->size, cur->item_len = (int32_t)
+                        get_bits(base->bytes, cur->BIT -= len_bits, len_bits), cur->field_item++);
                 insert(cur, base->field_bit, 0, item_vals * fld->size);
                 set_bits(item_vals, len_bits, base->bytes, cur->BIT);
                 cur->item_len = item_vals;
@@ -1254,10 +1234,11 @@ bool set_item(Cursor *const cur, size_t item, int32_t item_vals)
             {
                 cur->field_item = 0;
                 cur->BIT        = base->BIT_S - fld->field_info_bits;
-                cur->item_len   = (int32_t) get_bits(bytes, cur->BIT -= -fld->length, -fld->length);
-                cur->BYTE       = base->BYTE_S;
+                cur->item_len   = (int32_t)get_bits(bytes, cur->BIT -= -fld->length, -fld->length);
+                cur->BYTE = base->BYTE_S;
             }
-            for(; cur->field_item < item; cur->BYTE += cur->item_len * fld->size, cur->item_len = (int32_t) get_bits(bytes, cur->BIT -= -fld->length, -fld->length), cur->field_item++);
+            for(; cur->field_item < item; cur->BYTE += cur->item_len * fld->size, cur->item_len = (int32_t)
+                    get_bits(bytes, cur->BIT -= -fld->length, -fld->length), cur->field_item++);
             if(
                 -1 < item_vals && cur->item_len != item_vals)
             {
@@ -1292,7 +1273,7 @@ bool set_item(Cursor *const cur, size_t item, int32_t item_vals)
                             cur->field_item = field_item;
                             cur->BYTE       = BYTE;
                             cur->BIT        = bit;
-                            cur->item_len   = (int32_t) get_bits(bytes, bit, len_bits);
+                            cur->item_len   = (int32_t)get_bits(bytes, bit, len_bits);
                             return true;
                         }
                         BYTE += get_bits(bytes, bit, len_bits) * fld->size;
@@ -1302,8 +1283,8 @@ bool set_item(Cursor *const cur, size_t item, int32_t item_vals)
             if(item_vals < 0) return false;
             if(_item < cur->field_item_0 || cur->field_items == 0)
             {
-                cur->BIT  = base->BIT_S - fld->field_info_bits;
-                cur->BYTE = base->BYTE_S;
+                cur->BIT                = base->BIT_S - fld->field_info_bits;
+                cur->BYTE               = base->BYTE_S;
                 const int32_t ins_items = cur->field_items == 0 ? 1 : cur->field_item_0 - _item;
                 insert(cur, base->field_bit, ins_items + len_bits, item_vals * fld->size);
                 cur->BIT                   = base->BIT_S - fld->field_info_bits - 1;
@@ -1328,7 +1309,7 @@ bool set_item(Cursor *const cur, size_t item, int32_t item_vals)
                     if((base->bytes[cur->BIT >> 3] & 1 << (cur->BIT & 7)) != 0)
                     {
                         cur->BIT -= len_bits;
-                        cur->item_len = (int32_t) get_bits(base->bytes, cur->BIT, len_bits);
+                        cur->item_len = (int32_t)get_bits(base->bytes, cur->BIT, len_bits);
                         cur->BYTE += cur->item_len * fld->size;
                     }
                 insert(cur, base->field_bit, len_bits, item_vals * fld->size);
@@ -1336,8 +1317,8 @@ bool set_item(Cursor *const cur, size_t item, int32_t item_vals)
             else
             {
                 const int32_t ins_items = _item - (cur->field_item_0 + cur->field_items) + 1;
-                cur->BIT  = base->BIT_E;
-                cur->BYTE = base->BYTE_E;
+                cur->BIT                = base->BIT_E;
+                cur->BYTE               = base->BYTE_E;
                 insert(cur, base->field_bit, ins_items + len_bits, item_vals * fld->size);
                 cur->BIT  = base->BIT_E + len_bits;
                 cur->BYTE = base->BYTE_E - item_vals * fld->size;
@@ -1406,7 +1387,7 @@ bool set_item(Cursor *const cur, size_t item, int32_t item_vals)
             else
             {
                 const int32_t ins_items = _item + 1 - (cur->field_item_0 + cur->field_items);
-                cur->BIT = base->BIT_E;
+                cur->BIT                = base->BIT_E;
                 insert(cur, base->field_bit, ins_items + bits, 0);
                 cur->BIT = base->BIT_E + bits;
                 set_bits(cur->field_items += ins_items, fld->sparse_bits, base->bytes, base->BIT_S - fld->field_info_bits);
@@ -1428,7 +1409,7 @@ bool set_item(Cursor *const cur, size_t item, int32_t item_vals)
                 int32_t item_vars;
                 do
                 {
-                    int32_t bits = fld->size * (item_vars = (int32_t) get_bits(bytes, bit -= -fld->length, -fld->length));
+                    int32_t bits = fld->size * (item_vars = (int32_t)get_bits(bytes, bit -= -fld->length, -fld->length));
                     bit -= bits;
                     field_item++;
                 }
@@ -1480,7 +1461,7 @@ bool set_item(Cursor *const cur, size_t item, int32_t item_vals)
                         if(field_item == item)
                         {
                             cur->field_item = field_item;
-                            cur->item_len   = (int32_t) get_bits(bytes, bit, len_bits);
+                            cur->item_len   = (int32_t)get_bits(bytes, bit, len_bits);
                             cur->BIT        = bit - cur->item_len * fld->size;
                             return true;
                         }
@@ -1491,7 +1472,7 @@ bool set_item(Cursor *const cur, size_t item, int32_t item_vals)
             if(item_vals < 0) return false;
             if(_item < cur->field_item_0 || cur->field_items == 0)
             {
-                cur->BIT = base->BIT_S - fld->field_info_bits;
+                cur->BIT                = base->BIT_S - fld->field_info_bits;
                 const int32_t ins_items = cur->field_items == 0 ? 1 : cur->field_item_0 - _item;
                 insert(cur, base->field_bit, ins_items + len_bits + item_vals * fld->size, 0);
                 cur->BIT                   = base->BIT_S - fld->field_info_bits - 1;
@@ -1514,7 +1495,7 @@ bool set_item(Cursor *const cur, size_t item, int32_t item_vals)
                     if((base->bytes[cur->BIT >> 3] & 1 << (cur->BIT & 7)) != 0)
                     {
                         cur->BIT -= len_bits;
-                        cur->item_len = (int32_t) get_bits(base->bytes, cur->BIT, len_bits);
+                        cur->item_len = (int32_t)get_bits(base->bytes, cur->BIT, len_bits);
                         cur->BIT -= cur->item_len * fld->size;
                     }
                 insert(cur, base->field_bit, len_bits + item_vals * fld->size, 0);
@@ -1522,7 +1503,7 @@ bool set_item(Cursor *const cur, size_t item, int32_t item_vals)
             else
             {
                 const int32_t ins_items = _item - (cur->field_item_0 + cur->field_items) + 1;
-                cur->BIT = base->BIT_E;
+                cur->BIT                = base->BIT_E;
                 insert(cur, base->field_bit, ins_items + len_bits + item_vals * fld->size, 0);
                 cur->BIT = base->BIT_E + item_vals * fld->size + len_bits;
                 set_bits(cur->field_items += ins_items, fld->sparse_bits, base->bytes, base->BIT_S - fld->field_info_bits);
@@ -1530,12 +1511,10 @@ bool set_item(Cursor *const cur, size_t item, int32_t item_vals)
             base->bytes[cur->BIT >> 3] |= 1 << (cur->BIT & 7);
             set_bits(cur->item_len = item_vals, len_bits, base->bytes, cur->BIT -= len_bits);
             cur->BIT -= item_vals * fld->size;
-            cur->item_len          = item_vals;
+            cur->item_len = item_vals;
             break;
         }
     }
-    cur->field_item          = _item;
+    cur->field_item = _item;
     return false;
 }
-
-

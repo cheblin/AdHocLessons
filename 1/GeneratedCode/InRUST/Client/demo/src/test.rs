@@ -17,7 +17,7 @@ impl ClientServerLink_transmitter {
 }
 
 impl host::ClientServerLink::ITransmitter for ClientServerLink_transmitter {
-	unsafe extern "C" fn dequeue(dst: *mut sys::Transmitter) -> *mut sys::Pack {
+	unsafe extern "C" fn dequeue(dst: *mut sys::Transmitter) -> *const sys::Pack {
 		let self_: &mut Self = ad_hoc_gen::sys::self_by_field_ptr!(dst, transmitter);
 
 		if let Ok(mut pack) = self_.sending_queue.1.try_recv() {

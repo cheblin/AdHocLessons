@@ -91,5 +91,5 @@ fun main() {
     println("-------------------- FirstPack -------------------------")
 
     if (ClientServerLink_instance.sendFirstPack()) transmission(ClientServerLink_instance.transmitter, TestChannel_instance.receiverAdv)
-    else throw RuntimeException("error BBOX_FAILURE_SENDING_QUEUE_OVERFLOW")
+    else throw RuntimeException("error AD_HOC_FAILURE_SENDING_QUEUE_OVERFLOW")
 }

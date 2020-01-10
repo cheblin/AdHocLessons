@@ -3,8 +3,8 @@ import _Lib = _org.unirail.AdHoc;
 import _Pack = _Lib.Pack;
 import _Cursor = _Pack.Cursor;
 
-import { org as _bbox } from './Client';
-import _Config = _bbox.unirail.AdHoc.Config;
+import { org as _ad_hoc } from './Client';
+import _Config = _ad_hoc.unirail.AdHoc.Config;
 
 import { org as _gen } from './Client';
 import _Host_root = _gen.company.some_namespace;
@@ -39,7 +39,7 @@ export namespace org.unirail {
 
             let ClientServerLink_instance = new ClientServerLink_demo();
 
-            if (!ClientServerLink_instance.sendFirstPack()) throw new Error('error BBOX_FAILURE_SENDING_QUEUE_OVERFLOW');
+            if (!ClientServerLink_instance.sendFirstPack()) throw new Error('error AD_HOC_FAILURE_SENDING_QUEUE_OVERFLOW');
 
             bytes_out = ClientServerLink_instance.transmitter.packs_into_bytes(buff, 0, buff.byteLength); // sending packs
         }

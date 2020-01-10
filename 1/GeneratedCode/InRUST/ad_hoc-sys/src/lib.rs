@@ -180,7 +180,7 @@ pub fn set_bit(src: bool, bit: usize, dst: *mut u8) {
 }
 
 #[repr(C)]
-pub struct Cursors(pub [Cursor; BBOX_NESTED_MAX as usize]);
+pub struct Cursors(pub [Cursor; AD_HOC_NESTED_MAX as usize]);
 
 impl Cursors {
     pub const fn new() -> Cursors { unsafe { transmute([0u8; ::std::mem::size_of::<Cursors>()]) } }
@@ -251,7 +251,7 @@ impl Cursor {
 
 
 impl Transmitter {
-    pub const fn new(pull: unsafe extern "C" fn(dst: *mut Transmitter) -> *mut Pack) -> Transmitter
+    pub const fn new(pull: unsafe extern "C" fn(dst: *mut Transmitter) -> *const Pack) -> Transmitter
     {
         Transmitter {
             time: 0,

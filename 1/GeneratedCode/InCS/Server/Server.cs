@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
+using System.Text;
 using org.unirail;
 using Cursor = org.unirail.AdHoc.Pack.Cursor;
 using Field = org.unirail.AdHoc.Pack.Meta.Field;

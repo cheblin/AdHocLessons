@@ -145,7 +145,7 @@ fn main() {
         .whitelist_type("Transmitter")
         .whitelist_type("Receiver")
         
-        .whitelist_var("BBOX_NESTED_MAX")
+        .whitelist_var("AD_HOC_NESTED_MAX")
         
         .layout_tests(false)
         

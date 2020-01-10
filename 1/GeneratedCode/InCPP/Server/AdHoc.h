@@ -1,11 +1,29 @@
 
-// Copyright 2019 Chikirev Sirguy, Unirail Group
+// AdHoc protocol - data interchange format
+// Copyright 2019 Chikirev Sirguy, Unirail Group. All rights reserved.
 //
-// Licensed under the Apache License, Version 2.0,
-// <LICENSE-APACHE or http://apache.org/licenses/LICENSE-2.0> or
-// the MIT license <LICENSE-MIT or http://opensource.org/licenses/MIT>,
-// at your option. This file may not be
-// copied, modified, or distributed except according to those terms
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+//     * Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+//     * Redistributions in binary form must reproduce the above
+// copyright notice, this list of conditions and the following disclaimer
+// in the documentation and/or other materials provided with the
+// distribution.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef __cplusplus
 extern "C"
 {
@@ -205,7 +223,7 @@ static inline Field const* getField(CursorBase* cur) { return cur->meta->fields[
 typedef struct
 {
     CursorBase base;
-    int32_t    D[BBOX_DIMS_MAX];
+    int32_t    D[AD_HOC_DIMS_MAX];
     size_t     BIT;
     size_t     BYTE;
     size_t     item_len;
@@ -215,8 +233,8 @@ typedef struct
     size_t     field_items_total;
 }              Cursor;
 
-typedef Cursor Cursors [BBOX_NESTED_MAX];
-#define CURSORS(var_name) Cursor var_name [BBOX_NESTED_MAX]
+typedef Cursor Cursors [AD_HOC_NESTED_MAX];
+#define CURSORS(var_name) Cursor var_name [AD_HOC_NESTED_MAX]
 
 typedef enum
 {
@@ -239,7 +257,7 @@ typedef enum
 
 typedef struct
 {
-    CursorBase cursors[BBOX_NESTED_MAX];
+    CursorBase cursors[AD_HOC_NESTED_MAX];
     uint16_t   level;
     UMAX       Uvalue;
     uint16_t   crc;
@@ -253,7 +271,7 @@ typedef struct Transmitter
 
     Flow flow;
 
-    Pack* (*pull)(struct Transmitter* dst);
+    const Pack* (*pull)(struct Transmitter* dst);
 }           Transmitter;
 
 
@@ -277,15 +295,15 @@ void     receive_adv(const uint8_t* src, size_t src_bytes, Receiver* dst);
 
 typedef enum
 {
-    BBOX_FAILURE_RECEIVE_PACK_WITH_UNEXPECTED_ID = 1,
-    BBOX_FAILURE_RECEIVE_TIMEOUT = 2,
-    BBOX_FAILURE_CREATE_SEND_PACK_FOR_CHANNEL = 3,
-    BBOX_FAILURE_RECEIVE_EXPECT_ID_AFTER_BR_BUT_GET_BR = 4,
-    BBOX_FAILURE_RECEIVE_EXPECT_SECOND_BR_BUT_GET = 5,
-    BBOX_FAILURE_RECEIVE_CRC_ERROR = 6,
-    BBOX_FAILURE_POCESS_UNEXPECTED_PACK_ID = 7,
-    BBOX_FAILURE_SEND = 8,
-    BBOX_FAILURE_INPUT_ARGUMENT_IS_OUT_OF_RANGE = 10,
+    AD_HOC_FAILURE_RECEIVE_PACK_WITH_UNEXPECTED_ID = 1,
+    AD_HOC_FAILURE_RECEIVE_TIMEOUT = 2,
+    AD_HOC_FAILURE_CREATE_SEND_PACK_FOR_CHANNEL = 3,
+    AD_HOC_FAILURE_RECEIVE_EXPECT_ID_AFTER_BR_BUT_GET_BR = 4,
+    AD_HOC_FAILURE_RECEIVE_EXPECT_SECOND_BR_BUT_GET = 5,
+    AD_HOC_FAILURE_RECEIVE_CRC_ERROR = 6,
+    AD_HOC_FAILURE_POCESS_UNEXPECTED_PACK_ID = 7,
+    AD_HOC_FAILURE_SEND = 8,
+    AD_HOC_FAILURE_INPUT_ARGUMENT_IS_OUT_OF_RANGE = 10,
     AFTER_PROCESSING = 13,
     AFTER_SENDING = 14,
 } HOST_EVENT;

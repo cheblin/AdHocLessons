@@ -6,8 +6,8 @@ public class MyDemoProject {}
 
 class Server implements InCS, InCPP, InC {
 	interface ToMyClients {
-	@id(0)
-	class FirstPack {}
+		@id(0)
+		class FirstPack {}
 	}
 	
 	interface HiddenVIP {}
@@ -16,6 +16,7 @@ class Server implements InCS, InCPP, InC {
 class Client implements InKT, InTS, InRUST {
 	interface ToServer {}
 }
+
 class ClientServerLink extends AdvProtocol implements Client.ToServer, Server.ToMyClients {}
 
 

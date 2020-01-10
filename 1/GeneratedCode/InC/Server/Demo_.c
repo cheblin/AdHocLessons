@@ -27,10 +27,8 @@ static inline Meta const * ClientServerLink_DEMO_dispatcher(Receiver* receiver, 
 
 
 
-
 int main()
 {
-    static CURSORS(cur);
     c_ClientServerLink_DEMO ClientServerLink_instance = { .channel.receiver.dispatch = ClientServerLink_DEMO_dispatcher  };
     return 0;
 }

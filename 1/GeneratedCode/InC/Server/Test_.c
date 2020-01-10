@@ -21,12 +21,12 @@ typedef struct
 
 
 /**
- * brief send EmptyPack
+ * send FirstPack
  * param SEND function name with signature bool (c_TEST_Channel * dst, Pack* pack)
  * param c_TEST_Channel * pointer to channel that contains transmitter
  * return true if add pack to the sending queue succeed
  */
-#define c_TEST_Channel_send_FirstPack(SEND, c_TEST_Channel) ( SEND ( c_TEST_Channel , &meta0pack) )
+#define c_TEST_Channel_send_FirstPack(SEND, c_TEST_Channel) ( SEND ( c_TEST_Channel , (Pack *)&meta0pack) )
 
 
 typedef struct
@@ -37,7 +37,7 @@ typedef struct
 } c_TEST_Channel;
 bool TEST_Channel_send(c_TEST_Channel * dst, Pack  * const pack) { return dst->test_pack ? false : (dst->test_pack = pack), true;}
 
-Pack * TEST_Channel_pull(Transmitter * transmitter)
+const Pack * TEST_Channel_pull(Transmitter * transmitter)
 {
     c_TEST_Channel * ch = (c_TEST_Channel *)((uint8_t*)transmitter - offsetof(c_TEST_Channel, transmitter));
     Pack * pack = ch->test_pack;
@@ -76,8 +76,6 @@ static inline Meta const * ClientServerLink_TEST_dispatcher(Receiver* receiver, 
 int main()
 {
     static uint8_t buff[512];
-    CURSORS(cur);
-    CURSORS(cur2);
     c_TEST_Channel TEST_Channel_instance = { .transmitter.pull = TEST_Channel_pull  };
     c_ClientServerLink_TEST ClientServerLink_instance = { .channel.receiver.dispatch = ClientServerLink_TEST_dispatcher  };
     {
