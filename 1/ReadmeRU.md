@@ -19,14 +19,14 @@
 Предположим пространство имен будет **org.company.namespace,** а проект
 **MyDemoProject**
 
-![image](https://user-images.githubusercontent.com/29354319/72063798-76484900-3315-11ea-8829-3e9fac3f52a3.png)
+![image](https://user-images.githubusercontent.com/29354319/72199746-25eafb80-347b-11ea-9e45-e8f8ca8bc2dd.png)
 
 Это были первые **обязательные** элементы файла описания протокола **AdHoc**.
 
-Теперь можно начинать описывать участников информационного обмена. В **AdHoc** это делается **JAVA** конструкцией `class` в теле класса проекта.
+Теперь можно начинать описывать участников информационного обмена. В **AdHoc** это делается **JAVA** конструкцией `class` в теле интерфейса проекта.
 Создадим двоих участников с оригинальными названиями `Server` и `Client`.
 
-![image](https://user-images.githubusercontent.com/29354319/72063937-c58e7980-3315-11ea-8afc-b734a7e0b38a.png)
+![image](https://user-images.githubusercontent.com/29354319/72199784-91cd6400-347b-11ea-8262-5d709f030d89.png)
 
 
 Далее опишем на каких языках будут сгенерированы исходники для `Server` и `Client`.  
@@ -38,7 +38,7 @@
 
 Требуемые языки кодогенерации перечисляются через запятую после `implements` узла
 
-![image](https://user-images.githubusercontent.com/29354319/72064169-464d7580-3316-11ea-9baa-9cb1b4167504.png)
+![image](https://user-images.githubusercontent.com/29354319/72199865-38663480-347d-11ea-87e2-e0ae9c774426.png)
 
 
 Каждый узел содержит в себе набор интерфейсов, через которые он взаимодействует с другими узлами
@@ -47,7 +47,7 @@
 Узел может содержать неограниченное число интерфейсов. Интерфейсы в свою
 очередь, конструкцией **extends** могут неограниченно наследовать пакеты от других интерфейсов
 
-![image](https://user-images.githubusercontent.com/29354319/72064436-d2f83380-3316-11ea-88da-4603394f138c.png)
+![image](https://user-images.githubusercontent.com/29354319/72199918-c3dfc580-347d-11ea-8a20-3cdb9049d55f.png)
 
 
  
@@ -57,7 +57,7 @@
 
  Для примера, добавим узлу `Server` возможность **получать** через созданный интерфейсе **ToMyClients**, пустой пакет `FirstPack`.
 
-![image](https://user-images.githubusercontent.com/29354319/72064739-78130c00-3317-11ea-9fb6-da34a65b2e3c.png)
+![image](https://user-images.githubusercontent.com/29354319/72199950-2a64e380-347e-11ea-8d19-4ebd7b4ba523.png)
 
 `FirstPack` пакет, по сути пуст, кроме своего ID, не содержит в себе никакой информации, но этого достаточно. 
 Информацией будет является сам факт получения этого пакета. Такие пакеты используются когда необходимо послать
@@ -82,7 +82,7 @@
 каналом с именем **ClientServerLink** и пусть этот канал будет с **AdvProtocol**
 в итоге получаем следующее описание протокола.
 
-![image](https://user-images.githubusercontent.com/29354319/72064844-c7f1d300-3317-11ea-9667-3805e26f3df2.png)
+![image](https://user-images.githubusercontent.com/29354319/72200011-0eae0d00-347f-11ea-98e1-7a0204677f11.png)
 
 Выглядит понятно и логично, однако, именно как JAVA программа - совершенно бесполезно. 
 
@@ -120,7 +120,7 @@
 Исправляем компонент пространства имён спецификации, меняем **org.company.namespace** на
 **org.company.some_namespace**
 
-![image](https://user-images.githubusercontent.com/29354319/72065336-f45a1f00-3318-11ea-8e99-b9b3d8f116b3.png)
+![image](https://user-images.githubusercontent.com/29354319/72200031-516fe500-347f-11ea-9bda-9381bdd49154.png)
 
 Перезапускаем **AdHocAgent**, и, через короткое время, получаем [сгенерированные сервером
 исходники](https://github.com/cheblin/AdHocLessons/tree/master/1/GeneratedCode) в **рабочей/текущей папке** отработавшего **AdHocAgent** процесса.
